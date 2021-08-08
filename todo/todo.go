@@ -1,6 +1,9 @@
-package main
+package todo
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	_                    Todo = &todo{}
@@ -9,7 +12,7 @@ var (
 )
 
 type Todo interface {
-	Add(string)
+	Add(string) uint64
 	List() []Item
 	Done(id uint64) error
 }
@@ -20,22 +23,29 @@ type Item struct {
 	Done  bool
 }
 
+func (i Item) String() string {
+	if i.Done {
+		return fmt.Sprintf("[Done] %s", i.Value)
+	}
+	return fmt.Sprintf("%s", i.Value)
+}
+
 type todo struct {
-	items         []Item
-	undoneItemsID []uint64
-	doneItemsID   []uint64
+	items          []Item
+	doneItemsIndex []int
 }
 
 func NewTodo() Todo {
 	return &todo{
-		items:       make([]Item, 0),
-		doneItemsID: make([]uint64, 0),
+		items:          make([]Item, 0),
+		doneItemsIndex: make([]int, 0),
 	}
 }
 
-func (t *todo) Add(value string) {
-	id := uint64(len(t.items))
+func (t *todo) Add(value string) uint64 {
+	id := uint64(len(t.items) + 1)
 	t.items = append(t.items, Item{ID: id, Value: value, Done: false})
+	return id
 }
 
 func (t *todo) List() []Item {
@@ -45,23 +55,25 @@ func (t *todo) List() []Item {
 			list = append(list, v)
 		}
 	}
-	for i := len(t.doneItemsID) - 1; i >= 0; i-- {
-		list = append(list, t.items[t.doneItemsID[i]])
+	for i := len(t.doneItemsIndex) - 1; i >= 0; i-- {
+		list = append(list, t.items[t.doneItemsIndex[i]])
 	}
 	return list
 }
 
 func (t *todo) Done(id uint64) error {
 
-	if uint64(len(t.items)) <= id {
+	if id < 1 || uint64(len(t.items)) < id {
 		return ErrNoSuchItem
 	}
 
-	if t.items[id].Done == true {
+	index := int(id - 1)
+	if t.items[index].Done == true {
 		return ErrItemHasMaskedDone
 	}
 
-	t.items[id].Done = true
-	t.doneItemsID = append(t.doneItemsID, id)
+	t.items[index].Done = true
+	t.doneItemsIndex = append(t.doneItemsIndex, index)
 	return nil
+
 }
