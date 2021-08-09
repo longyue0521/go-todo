@@ -24,7 +24,7 @@ func (suite *TodoTestSuite) SetupTest() {
 		{ID: uint64(5), Value: "cpp", Done: false},
 	}
 	for k, v := range suite.items {
-		id := suite.todo.Add(v.Value)
+		id, _ := suite.todo.Add(v.Value)
 		assert.Equal(suite.T(), v.ID, id)
 		assert.Equal(suite.T(), uint64(k+1), id)
 	}
@@ -44,6 +44,13 @@ func (suite *TodoTestSuite) TestItemString() {
 	expected := `[Done] gojava[Done] pythonrust[Done] cpp`
 
 	assert.Equal(suite.T(), expected, buf.String())
+}
+
+func (suite *TodoTestSuite) TestAddError() {
+	todo := NewTodo()
+	id, err := todo.Add("")
+	assert.Equal(suite.T(), id, uint64(0))
+	assert.ErrorIs(suite.T(), err, ErrEmptyItem)
 }
 
 func (suite *TodoTestSuite) TestEmptyList() {

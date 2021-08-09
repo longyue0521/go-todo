@@ -7,14 +7,15 @@ import (
 
 var (
 	_                    Todo = &todo{}
+	ErrEmptyItem              = errors.New("empty item")
 	ErrItemHasMaskedDone      = errors.New("item has done")
 	ErrNoSuchItem             = errors.New("no souch item")
 )
 
 type Todo interface {
-	Add(string) uint64
+	Add(item string) (itemID uint64, err error)
 	List() []Item
-	Done(id uint64) error
+	Done(itemID uint64) error
 }
 
 type Item struct {
@@ -42,10 +43,13 @@ func NewTodo() Todo {
 	}
 }
 
-func (t *todo) Add(value string) uint64 {
-	id := uint64(len(t.items) + 1)
-	t.items = append(t.items, Item{ID: id, Value: value, Done: false})
-	return id
+func (t *todo) Add(item string) (id uint64, err error) {
+	if item == "" {
+		return 0, ErrEmptyItem
+	}
+	id = uint64(len(t.items) + 1)
+	t.items = append(t.items, Item{ID: id, Value: item, Done: false})
+	return
 }
 
 func (t *todo) List() []Item {
